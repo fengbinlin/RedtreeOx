@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Tatoon2_NormalMap
+  m_Shader: {fileID: 4800000, guid: efa54c2a5b4b9f9479ee6ec0b2f7d5dc, type: 3}
+  m_ShaderKeywords: _OUTLINENOISE1_ON _OUTLINENOISE2_ON _RIMLIGHTCOLOR_ON _SPECLIGHTCOLOR_ON
+    _USENORMALMAP_ON _USEOUTLINE1_ON _USEOUTLINE2_ON _USEOUTLINE_ON _USERIM1_ON _USESHADOW1_ON
+    _USESHADOW_ON _USESPECULAR1_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _EmissiveMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTexture:
+        m_Texture: {fileID: 2800000, guid: 837a2738c120e5c4280b1890aa7e0b54, type: 3}
+        m_Scale: {x: 2, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _Normal1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 2800000, guid: 5a8c1ea2e71770c4ba1bfb57da4c74a0, type: 3}
+        m_Scale: {x: 2, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _OutlineNoiseTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RimTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RimTexture1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowTexture1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecularMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecularMap1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureDiffuse:
+        m_Texture: {fileID: 2800000, guid: b998fcc359595644cba8e69dc9e0bd79, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureRamp:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _Animate: 0
+    - _ChangeAxis: 0
+    - _Cutoff: 0.5
+    - _Float3: 0
+    - _GradientPosition: 0
+    - _GradientRotation: 0
+    - _GradientSize: 0
+    - _Intensity: 1
+    - _Keyword0: 0
+    - _Level2: 0
+    - _Level3: 0
+    - _NoiseTextureScale: 2
+    - _NoiseTextureScale1: 2
+    - _NormalScale: 0
+    - _NormalStrength: 0.15
+    - _OutlineNoise: 0
+    - _OutlineNoise1: 1
+    - _OutlineNoise2: 1
+    - _OutlineNoiseScale: 1
+    - _OutlineNoiseScale1: 1.82
+    - _OutlineSize: 0.02
+    - _OutlineSize1: 0.005
+    - _PowerColor1: 1
+    - _PowerColor2: 1
+    - _PowerColor3: 1
+    - _RimBlend: 0
+    - _RimBlend1: 0
+    - _RimLightColor: 1
+    - _RimLightColor1: 0
+    - _RimLightIntensity: 0.15
+    - _RimLightIntensity1: 0
+    - _RimSize: -0.04
+    - _RimSize1: 0.41
+    - _RimTextureRotation: 0
+    - _RimTextureRotation1: 0
+    - _RimTextureTiling: 0
+    - _RimTextureTiling1: 0
+    - _RimTextureViewProjection: 0
+    - _RimTextureViewProjection1: 0
+    - _ShadowBlend: 0
+    - _ShadowOpacity: -0.02
+    - _ShadowSize: 0
+    - _ShadowTextureRotation: 0
+    - _ShadowTextureRotation1: 0
+    - _ShadowTextureTiling: 0
+    - _ShadowTextureTiling1: 0
+    - _ShadowTextureViewProjection: 0
+    - _ShadowTextureViewProjection1: 0
+    - _Smoothness: 0
+    - _SpecLightColor: 1
+    - _SpecLightColor1: 0
+    - _SpecularBlend: 0
+    - _SpecularBlend1: 0
+    - _SpecularLightIntensity: 0.4
+    - _SpecularLightIntensity1: 1
+    - _SpecularSize: 0.005
+    - _SpecularSize1: 0.005
+    - _SpecularTextureRotation: 0
+    - _SpecularTextureRotation1: 0
+    - _SpecularTextureTiling: 0
+    - _SpecularTextureTiling1: 0
+    - _SpecularTextureViewProjection: 0
+    - _SpecularTextureViewProjection1: 0
+    - _Speed: 0
+    - _Speed1: 0
+    - _UseEmissive: 0
+    - _UseGradient: 0
+    - _UseNormalMap: 1
+    - _UseOutline: 1
+    - _UseOutline1: 1
+    - _UseOutline2: 1
+    - _UseOutlineFire: 0
+    - _UseOutlineFire1: 0
+    - _UseOutlineFire2: 0
+    - _UseRamp: 0
+    - _UseRim: 0
+    - _UseRim1: 1
+    - _UseShadow: 1
+    - _UseShadow1: 1
+    - _UseShadowTexture: 0
+    - _UseSpecular: 0
+    - _UseSpecular1: 1
+    - _XDirectionSpeed: 0
+    - _XSpeed: 0
+    - _YDirectionSpeed: 0
+    - _YSpeed: 0
+    - __dirty: 0
+    m_Colors:
+    - _ColorA: {r: 1, g: 0, b: 0, a: 0}
+    - _ColorB: {r: 0, g: 0.12644666, b: 1, a: 0}
+    - _DiffuseColor: {r: 1, g: 1, b: 1, a: 0}
+    - _EmissiveColor: {r: 2.996078, g: 0.0611825, b: 0, a: 0}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _OutlineColor1: {r: 0, g: 0, b: 0, a: 0}
+    - _OutlineColor2: {r: 0.36578855, g: 0.56054074, b: 0.5660378, a: 0}
+    - _OutlineColor3: {r: 1, g: 0.06464233, b: 0, a: 0}
+    - _RimColor: {r: 0.5849056, g: 0.5849056, b: 0.5849056, a: 0}
+    - _RimColor1: {r: 0.42252582, g: 0.4245283, b: 0.424277, a: 0}
+    - _ShadowColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
+    - _ShadowColor1: {r: 0.50462794, g: 0.6524246, b: 0.7924528, a: 1}
+    - _SpecularColor: {r: 1, g: 0.9575656, b: 0.75, a: 0}
+    - _SpecularColor1: {r: 1, g: 0.9575656, b: 0.75, a: 0}
