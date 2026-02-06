@@ -56,14 +56,14 @@ public class DigitalHumanAnimatorController : MonoBehaviour
         UpdateMouthMovement();
     }
 
-    void StartTalking()
+    public void StartTalking()
     {
         isTalking = true;
         PlayNextTalkAnimation();
         animator.SetBool("IsTalking", true);
     }
 
-    void StopTalking()
+    public void StopTalking()
     {
         isFirstTalk = true;
         isTalking = false;
