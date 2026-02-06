@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Tatoon2_URP_SmoothNormalsExemple
   m_Shader: {fileID: 4800000, guid: afaac6b0f3da1f64c86a4865a4b42c63, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ANIMATE_ON
@@ -26,6 +28,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -88,6 +91,7 @@ Material:
     - _ChangeAxis: 1
     - _Dissolve: 0.78
     - _EdgeSize: 0.005
+    - _EnvironmentReflections: 1
     - _GradientPosition: -1.1
     - _GradientRotation: 90
     - _GradientSize: 2.63
@@ -100,9 +104,10 @@ Material:
     - _Normalize: 0
     - _OutlineNoise: 1
     - _OutlineNoiseScale: 0
-    - _OutlineSize: 8.77
+    - _OutlineSize: 24.6
     - _QueueControl: -1
     - _QueueOffset: 0
+    - _ReceiveShadows: 1
     - _RimBlend: 0
     - _RimLightColor: 0
     - _RimLightIntensity: 0.13
@@ -118,6 +123,7 @@ Material:
     - _Smoothness: 0
     - _SpecLightColor: 1
     - _SpecularBlend: 0
+    - _SpecularHighlights: 1
     - _SpecularLightIntensity: 0.46
     - _SpecularSize: 0.01
     - _SpecularTextureRotation: 0
