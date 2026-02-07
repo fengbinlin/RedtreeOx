@@ -1099,6 +1099,58 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!1 &121974021
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 121974023}
+  - component: {fileID: 121974022}
+  m_Layer: 0
+  m_Name: SttManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &121974022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 121974021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a5d507ff1760dd4f92417cdcc6e89de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AppKey: 6478715526
+  AccessKey: FTsrazn8vMy_ndWuwsltJz81XfQw2Pvy
+  ResourceId: volc.seedasr.sauc.duration
+  WssUrl: wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async
+  SampleRate: 16000
+  FrameMs: 200
+  StartKey: 282
+  StopKey: 283
+--- !u!4 &121974023
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 121974021}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1930.6957, y: 830.7971, z: -103.370544}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &126376060
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8520,6 +8572,7 @@ MonoBehaviour:
   mouthOpenMin: -15
   mouthOpenMax: 5
   mouthMoveSpeed: 12
+  isFirstTalk: 1
 --- !u!1001 &1193974374
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9311,6 +9364,7 @@ MonoBehaviour:
   mouthOpenMin: 0
   mouthOpenMax: 25
   mouthMoveSpeed: 10
+  isFirstTalk: 1
 --- !u!1001 &1311021415
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15119,3 +15173,4 @@ SceneRoots:
   - {fileID: 371744660}
   - {fileID: 575860006}
   - {fileID: 550933335}
+  - {fileID: 121974023}
