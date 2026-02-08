@@ -8,36 +8,36 @@ using System.Collections.Generic;
 [RequireComponent(typeof(AudioSource))]
 public class VolcTTSClient : MonoBehaviour
 {
-    [Header("API Æ¾¾Ý")]
-    public string appId;
-    public string accessToken;
-    public string resourceId = "seed-tts-2.0";
+    [Header("API Æ¾ï¿½ï¿½")]
+    public string appId="6478715526";
+    public string accessToken="FTsrazn8vMy_ndWuwsltJz81XfQw2Pvy";
+    public string resourceId = "volc.bigasr.auc_turbo";
 
-    [Header("TTS ²ÎÊý")]
+    [Header("TTS ï¿½ï¿½ï¿½ï¿½")]
     public string speaker = "saturn_zh_male_shuanglangshaonian_tob";
     [Range(-50, 100)] public int speechRate = 0;
 
-    [Header("²âÊÔ¿ØÖÆ (°´F2)")]
+    [Header("ï¿½ï¿½ï¿½Ô¿ï¿½ï¿½ï¿½ (ï¿½ï¿½F2)")]
     [TextArea(3, 5)]
-    public string testText = "²ÉÑùÂÊ×ÔÊÊÓ¦ÒÑ¿ªÆô¡£ÎÞÂÛÄãµÄÏµÍ³ÊÇ48000»¹ÊÇ44100£¬ÏÖÔÚµÄÒôµ÷¶¼Ó¦¸ÃÊÇÕý³£µÄ¡£";
+    public string testText = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ñ¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½48000ï¿½ï¿½ï¿½ï¿½44100ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¡ï¿½";
 
     private AudioSource audioSource;
     private UnityWebRequest currentRequest;
 
-    // --- ²ÉÑùÂÊÍ¬²½¹Ø¼ü±äÁ¿ ---
-    private const int SourceSampleRate = 24000; // »ðÉ½·µ»ØµÄ¹Ì¶¨²ÉÑùÂÊ
-    private int systemSampleRate;               // UnityÏµÍ³µÄÊµ¼ÊÊä³ö²ÉÑùÂÊ
+    // --- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ ---
+    private const int SourceSampleRate = 24000; // ï¿½ï¿½É½ï¿½ï¿½ï¿½ØµÄ¹Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    private int systemSampleRate;               // UnityÏµÍ³ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private readonly Queue<float> _streamingBuffer = new Queue<float>();
     private bool _isDataIncoming = false;
-    private float _samplePointer = 0f;          // ÓÃÓÚÖØ²ÉÑùµÄÖ¸Õë
+    private float _samplePointer = 0f;          // ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
 
     void Awake()
     {
         audioSource = GetComponent<AudioSource>();
-        // »ñÈ¡µ±Ç°ÔËÐÐÉè±¸µÄÊµ¼Ê²ÉÑùÂÊ (Èç 48000)
+        // ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½è±¸ï¿½ï¿½Êµï¿½Ê²ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ 48000)
         systemSampleRate = AudioSettings.outputSampleRate;
 
-        // ´´½¨Ò»¸ö¿ÕµÄÒôÆµÆ¬¶Î¹ÒÔØ£¬È·±£ OnAudioFilterRead Ö´ÐÐ
+        // ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ÆµÆ¬ï¿½Î¹ï¿½ï¿½Ø£ï¿½È·ï¿½ï¿½ OnAudioFilterRead Ö´ï¿½ï¿½
         audioSource.clip = AudioClip.Create("Streaming", systemSampleRate, 1, systemSampleRate, false);
         audioSource.loop = true;
         audioSource.Play();
@@ -49,7 +49,7 @@ public class VolcTTSClient : MonoBehaviour
     }
 
 
-    // --- Ö÷Òª½Ó¿Ú£º¿ªÊ¼ºÏ³É²¢²¥·Å ---
+    // --- ï¿½ï¿½Òªï¿½Ó¿Ú£ï¿½ï¿½ï¿½Ê¼ï¿½Ï³É²ï¿½ï¿½ï¿½ï¿½ï¿½ ---
     public void Speak(string text)
     {
         StopAllCoroutines();
@@ -85,10 +85,10 @@ public class VolcTTSClient : MonoBehaviour
         _isDataIncoming = false;
     }
 
-    // --- ºËÐÄÐÞ¸´£º´ø±ÈÂÊ×ª»»µÄÒôÆµ¶ÁÈ¡ ---
+    // --- ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½È¡ ---
     void OnAudioFilterRead(float[] data, int channels)
     {
-        // ¼ÆËã×ª»»±ÈÂÊ (ÀýÈç 24000 / 48000 = 0.5)
+        // ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ 24000 / 48000 = 0.5)
         float playbackSpeed = (float)SourceSampleRate / systemSampleRate;
 
         lock (_streamingBuffer)
@@ -97,10 +97,10 @@ public class VolcTTSClient : MonoBehaviour
             {
                 float sample = 0;
 
-                // Ö»ÓÐµ±»º³åÇø×ã¹»´ó£¬»òÕßÊý¾ÝÒÑ¾­´«ÊäÍê±ÏÊ±²Å¿ªÊ¼Ïû·Ñ
+                // Ö»ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã¹»ï¿½ó£¬»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Å¿ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
                 if (_streamingBuffer.Count > 1000 || (!_isDataIncoming && _streamingBuffer.Count > 0))
                 {
-                    // Ä£ÄâÖØ²ÉÑù£º¸ù¾Ý±ÈÂÊ²½½øÖ¸Õë
+                    // Ä£ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý±ï¿½ï¿½Ê²ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
                     if (_streamingBuffer.Count > 0)
                     {
                         sample = GetNextSampleWithRatio(playbackSpeed);
@@ -115,13 +115,13 @@ public class VolcTTSClient : MonoBehaviour
         }
     }
 
-    // ¸ù¾Ý±ÈÂÊ´Ó¶ÓÁÐÖÐÈ¡Ñù£¬ÊµÏÖ¼òµ¥µÄÏßÐÔ½µ²ÉÑù/Éý²ÉÑù
+    // ï¿½ï¿½ï¿½Ý±ï¿½ï¿½Ê´Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Êµï¿½Ö¼òµ¥µï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     float GetNextSampleWithRatio(float ratio)
     {
         _samplePointer += ratio;
         float currentSample = 0;
 
-        // µ±Ö¸ÕëÀÛ»ý³¬¹ý 1 Ê±£¬´Ó¶ÓÁÐÀïÕæÕýµ¯³öÒ»¸öÊý¾Ý
+        // ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½Û»ï¿½ï¿½ï¿½ï¿½ï¿½ 1 Ê±ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         while (_samplePointer >= 1.0f)
         {
             if (_streamingBuffer.Count > 0)

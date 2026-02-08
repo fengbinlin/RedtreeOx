@@ -18,9 +18,9 @@ namespace LKZ.Manager
     {
         [SerializeField, TextArea]
         private string StartContent =
-@"ÎÒÊÇÒ»¸öÓÉÄ¾×ÓÀî¿ª·¢µÄGPTÁÄÌì»úÆ÷ÈË
-Äã¿ÉÒÔÓïÒôºÍÎÒÁÄÌì
-Èç¹ûÄãÓÐÆäËûÐèÇó£¬ÇëÁªÏµwx:LKZ4251";
+@"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½î¿ªï¿½ï¿½ï¿½ï¿½GPTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµwx:LKZ4251";
 
 
         private VoiceRecognizerModel voiceRecognizer;
@@ -63,16 +63,16 @@ namespace LKZ.Manager
             llmLogic.Initialized();
 
             SendCommand.Send(new AddChatContentCommand { infoType = Enum.InfoType.ChatGPT, _addTextAction = value => value.Invoke(StartContent) });
-            SendCommand.Send(new GenerateFinishCommand { });//Éú³ÉÍê³ÉÃüÁî
+            SendCommand.Send(new GenerateFinishCommand { });//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
              
-            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });//¿ªÊ¼ÓïÒôÊ¶±ð
+            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½
 
         }
 
 
         private void OnDestroy()
         {
-            voiceRecognizer.OnDestroy();
+            //voiceRecognizer.OnDestroy();
         }
     }
 }

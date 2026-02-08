@@ -13,237 +13,136 @@ using UnityEngine;
 
 namespace LKZ.Logics
 {
-
     public sealed class LLMLogic
     {
+        [Inject] private AudioModel audioModel { get; set; }
+        [Inject] private MonoBehaviour _mono { get; set; }
+        [Inject] private ISendCommand SendCommand { get; set; }
+        [Inject] private IRegisterCommand RegisterCommand { get; set; }
 
-        private sealed class ResultData : IEnumerator
-        {
-            public string result;
-            public IEnumerator clip;
-
-            public object Current => current;// clip.Current;
-
-            object current = null;
-
-            public bool MoveNext()
-            {
-                if (!(clip.Current is AudioClip))
-                {
-                    current = clip.Current;
-                    return true;
-                }
-                else if (clip.Current is string str)
-                    return str != VoiceTTS.ErrorMess;
-                else
-                    return false;
-            }
-
-            public void Reset()
-            {
-
-            }
-        }
-
-        [Inject]
-        private AudioModel audioModel { get; set; }
-
-        [Inject]
-        private MonoBehaviour _mono { get; set; }
-
-        [Inject]
-        private ISendCommand SendCommand { get; set; }
-
-        [Inject]
-        private IRegisterCommand RegisterCommand { get; set; }
-
-        /// <summary>
-        /// GPT播放语音片段
-        /// </summary>
-        Queue<ResultData> gptVoice = new Queue<ResultData>();
-
-        Action<string> _showUITextAction;
-
-
-        private string onceResult;
-
-        /// <summary>
-        /// 是否接收完成GPT的内容
-        /// </summary>
-        private bool isRequestChatGPTContent, isStopCreate;
-
-        /// <summary>
-        /// 字幕同步携程
-        /// </summary>
-        private Coroutine _titleSynchronization_Cor;
-
-        /// <summary>
-        /// 字幕同步携程
-        /// </summary>
-        private Coroutine _requestGPTSegmentationCor;
+        private Queue<string> textQueue = new Queue<string>();
+        private bool isLLMProcessing = false;
+        private bool isTTSSynthesizing = false; // 核心：合成锁
+        private Action<string> _showUITextAction;
+        
+        private AudioClip streamingClip;
+        private int totalSamplesWritten = 0; 
+        private const int BufferSeconds = 120; // 增加长度
+        private const int SampleRate = 24000;
 
         public void Initialized()
         {
             RegisterCommand.Register<VoiceRecognitionResultCommand>(VoiceRecognitionResultCommandCallback);
-            
             RegisterCommand.Register<StopGenerateCommand>(StopGenerateCommandCallback);
         }
-         
-        private void StopGenerateCommandCallback(StopGenerateCommand obj)
-        {
-            if (!object.ReferenceEquals(null, _titleSynchronization_Cor))
-                _mono.StopCoroutine(_titleSynchronization_Cor);
-            if (!object.ReferenceEquals(null, _requestGPTSegmentationCor))
-                _mono.StopCoroutine(_requestGPTSegmentationCor);
 
-            _titleSynchronization_Cor = null;
-            _requestGPTSegmentationCor = null;
-
-            PlayFinish();
-        }
-
-        /// <summary>
-        /// 语音识别到内容回调
-        /// </summary>
-        /// <param name="obj"></param>
         private void VoiceRecognitionResultCommandCallback(VoiceRecognitionResultCommand obj)
         {
-            if (!obj.IsComplete)
+            if (!obj.IsComplete || string.IsNullOrEmpty(obj.text)) return;
+
+            SendCommand.Send(new AddChatContentCommand {
+                infoType = Enum.InfoType.ChatGPT,
+                _addTextAction = value => _showUITextAction = value
+            });
+
+            ResetState();
+            isLLMProcessing = true;
+            
+            _mono.StartCoroutine(LLM.Request(obj.text, ChatGPTStreamingCallback));
+            _mono.StartCoroutine(StreamControlCor());
+        }
+
+        private void ChatGPTStreamingCallback(string chunk, bool isFinal)
+        {
+            if (!string.IsNullOrEmpty(chunk))
             {
-                if (_showUITextAction == null)
-                    SendCommand.Send(new AddChatContentCommand { infoType = Enum.InfoType.My, _addTextAction = value => _showUITextAction = value });
-
-                _showUITextAction.Invoke(obj.text);
-
-                onceResult += obj.text;
+                lock(textQueue) { textQueue.Enqueue(chunk); }
             }
-            else
+            isLLMProcessing = !isFinal;
+        }
+
+        private IEnumerator StreamControlCor()
+        {
+            streamingClip = AudioClip.Create("StreamingTTS", SampleRate * BufferSeconds, 1, SampleRate, false);
+            totalSamplesWritten = 0;
+            bool hasStartedPlaying = false;
+
+            // 循环条件：LLM没完 OR 队列里有字 OR 正在合成网络请求 OR 还没播完
+            while (isLLMProcessing || textQueue.Count > 0 || isTTSSynthesizing || (hasStartedPlaying && IsAudioPlaying()))
             {
-                if (string.IsNullOrEmpty(onceResult))
-                    return;
+                string textToSynthesize = "";
 
-                SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = false });//停止语音识别
-
-                SendCommand.Send(new AddChatContentCommand { infoType = Enum.InfoType.ChatGPT, _addTextAction = value => _showUITextAction = value });
-
-                ClearGPTVoice();
-
-                 _requestGPTSegmentationCor = _mono.StartCoroutine(LLM.Request(onceResult, ChatGPTRequestCallback));
-                onceResult = string.Empty;
-                isStopCreate = false;
-            }
-        }
-
-        private void ChatGPTRequestCallback(string arg1, bool arg2)
-        {
-            if (!string.IsNullOrEmpty(arg1))
-                _mono.StartCoroutine(SynthesisCoroutine(arg1));
-             
-            isRequestChatGPTContent = arg2;
-
-        }
-
-
-        private IEnumerator SynthesisCoroutine(string text)
-        {
-            IEnumerator youdaoIE = VoiceTTS.Synthesis(text);
-
-            gptVoice.Enqueue(new ResultData { clip = youdaoIE, result = text });
-             
-            yield return youdaoIE;
-            if (_titleSynchronization_Cor == null)
-                _titleSynchronization_Cor = _mono.StartCoroutine(TitleSynchronizationCoroutine());
-
-        }
-
-        /// <summary>
-        /// 字幕同步协程
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerator TitleSynchronizationCoroutine()
-        {
-            SendCommand.Send(new ChatGPTStartTalkCommand());//开始播放
-
-            int lastIndex = -1;
-            while (!isStopCreate && (gptVoice.Count > 0 || !isRequestChatGPTContent))
-            { 
-                if (gptVoice.Count == 0)
+                // 只有当上一个网络合成请求完全结束时，才发下一个
+                if (!isTTSSynthesizing && textQueue.Count > 0)
                 {
-                    yield return null;
-                    continue;
-                }
-                ResultData result = gptVoice.Dequeue();
-
-                yield return result;
-                if (result.clip.Current is AudioClip clip)
-                {
-                    audioModel.Play(clip);
-
-                    int temp_Index = 0;
-                    yield return null;
-                    yield return null;
-
-                     
-                    while (true)
+                    lock (textQueue)
                     {
-                        if (audioModel.Time == clip.length || !audioModel.IsPlaying || _showUITextAction == null)
-                            break;
+                        while (textQueue.Count > 0) textToSynthesize += textQueue.Dequeue();
+                    }
+                }
 
-                        temp_Index = (int)((audioModel.Time / clip.length) * result.result.Length) - 1;
-                        temp_Index = Mathf.Clamp(temp_Index, 0, result.result.Length);
+                if (!string.IsNullOrEmpty(textToSynthesize))
+                {
+                    isTTSSynthesizing = true; 
+                    Debug.Log($"[LLMLogic] 串行合成开始: {textToSynthesize}");
+                    _showUITextAction?.Invoke(textToSynthesize);
 
-                        if (lastIndex != temp_Index)
-                        {
-                            string str = result.result[temp_Index].ToString();
-                            _showUITextAction(str);
-                            lastIndex = temp_Index;
+                    VoiceTTS.StartStreamingSynthesis(textToSynthesize, 
+                        onDataReceived: (samples) => {
+                            // 将数据按顺序填入连续的 Buffer 空间
+                            streamingClip.SetData(samples, totalSamplesWritten % (SampleRate * BufferSeconds));
+                            totalSamplesWritten += samples.Length;
+                        },
+                        onComplete: () => {
+                            isTTSSynthesizing = false; // 只有请求彻底完成后，才释放锁
                         }
-
-                        yield return null;
-                    }
-
-
-                    GameObject.Destroy(clip);
-
-                    if (result.result.Length > ++temp_Index)
-                    {
-                        string str = result.result[temp_Index].ToString();
-                        _showUITextAction(str);
-                    }
+                    );
                 }
+
+                // 缓冲 0.5 秒数据后再开始播，防止一开头就卡顿
+                if (!hasStartedPlaying && totalSamplesWritten > SampleRate * 0.5f) 
+                {
+                    audioModel.Play(streamingClip);
+                    SendCommand.Send(new ChatGPTStartTalkCommand());
+                    hasStartedPlaying = true;
+                }
+
+                yield return new WaitForSeconds(0.05f);
             }
 
-
+            Debug.Log("[LLMLogic] 播放完毕");
             PlayFinish();
         }
 
-        void ClearGPTVoice()
+        private bool IsAudioPlaying()
         {
-            while (gptVoice.Count > 0)
-            {
-                var item = gptVoice.Dequeue();
-                if (item.clip.Current is AudioClip clip)
-                    GameObject.Destroy(clip);
-
-            }
+            if (streamingClip == null) return false;
+            int currentSamplePos = (int)(audioModel.Time * SampleRate);
+            // 只要播放进度还没追上写入进度，就认为还在播放有效内容
+            return currentSamplePos < totalSamplesWritten - 500; 
         }
 
-        /// <summary>
-        /// 播放完成
-        /// </summary>
+        private void ResetState()
+        {
+            isLLMProcessing = false;
+            isTTSSynthesizing = false;
+            lock(textQueue) { textQueue.Clear(); }
+            if (streamingClip != null) { GameObject.Destroy(streamingClip); streamingClip = null; }
+            totalSamplesWritten = 0;
+        }
+
+        private void StopGenerateCommandCallback(StopGenerateCommand obj) => PlayFinish();
+
         private void PlayFinish()
         {
-            isStopCreate = true;
-
-            _titleSynchronization_Cor = null;
-            ClearGPTVoice();
-
-            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });//开始语音识别
-            SendCommand.Send(new GenerateFinishCommand { });//生成完成命令
-
-            _showUITextAction = null;
-
+            DigitalHumanAnimatorController.instance.StopTalking();
             audioModel.Stop();
+            ResetState();
+            _mono.StopAllCoroutines(); 
+            
+            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });
+            SendCommand.Send(new GenerateFinishCommand { });
+            _showUITextAction = null;
         }
     }
 }

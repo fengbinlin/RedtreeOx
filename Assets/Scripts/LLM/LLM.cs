@@ -116,38 +116,55 @@ namespace LKZ.GPT
             string last = "";
             string mess = "";
 
+            Debug.Log("===== [LLM] 准备发送 GPT 请求 =====");
+            Debug.Log($"URL: {config.url}");
+            Debug.Log($"Model: {userDataStruct.model}");
+            Debug.Log($"API Key (前8位显示): {config.key.Substring(0, Math.Min(8, config.key.Length))}********");
+            Debug.Log($"请求体 JSON:\n{requestData}");
+
             using (var request = new UnityWebRequest(config.url, "POST"))
             {
                 request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestData))
                 { contentType = "application/json" };
 
                 request.downloadHandler = new DownloadHandlerBuffer();
-
                 request.certificateHandler = new Certificate();
 
+                // 设置 Header
                 request.SetRequestHeader("Authorization", $"Bearer {config.key}");
+                Debug.Log($"Header: Authorization = Bearer {config.key.Substring(0, Math.Min(8, config.key.Length))}********");
+
                 UnityWebRequestAsyncOperation asyncOp = request.SendWebRequest();
-                 
+
                 while (!asyncOp.isDone)
                 {
+                    Debug.Log("[LLM] 等待响应...");
                     Disponse(false);
                     yield return wait_internal;
                 }
 
+                Debug.Log($"[LLM] 请求完成，HTTP状态码: {request.responseCode}");
+
                 if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
                 {
-                    Debug.LogError("Error: " + request.error);
+                    Debug.LogError("[LLM] 请求失败");
+                    Debug.LogError($"Error: {request.error}");
+                    Debug.LogError($"响应原文: {request.downloadHandler.text}");
                     callback?.Invoke("GPT出现点问题", true);
                     yield break;
                 }
-                // 处理最后一次接收到的数据
+
+                // 处理最后一次数据
                 Disponse(true);
 
-
+                // 内部解析方法（原封不动）
                 void Disponse(bool isComplete)
-                { 
+                {
                     string temp = "";
                     var str = request.downloadHandler.text;
+                    Debug.Log($"[LLM] 当前收到数据长度: {str.Length}");
+                    Debug.Log($"[LLM] 原始响应:\n{str}");
+
                     if (!string.IsNullOrEmpty(last))
                     {
                         temp = str.Replace(last, "");
@@ -158,32 +175,38 @@ namespace LKZ.GPT
                     last = str;
 
                     var datas = temp.Split("data:");
-
-
                     foreach (var requestJson in datas)
-                    { 
+                    {
                         if (string.IsNullOrEmpty(requestJson))
                             continue;
 
                         if (requestJson.Contains("[DONE]"))
                             break;
-                        var jsonP = JToken.Parse(requestJson.Replace("data:", ""));
-                        var item = jsonP["choices"][0];
 
-                        var tt = item["delta"].SelectToken("content")?.ToString();
-
-                        if (!string.IsNullOrEmpty(tt))
+                        try
                         {
-                            tt = tt.Trim();
-                            mess += tt;
+                            var jsonP = JToken.Parse(requestJson.Replace("data:", ""));
+                            var item = jsonP["choices"][0];
+                            var tt = item["delta"].SelectToken("content")?.ToString();
+                            if (!string.IsNullOrEmpty(tt))
+                            {
+                                tt = tt.Trim();
+                                mess += tt;
+                                Debug.Log($"[LLM] 增量文本: {tt}");
+                            }
+                            var finish = item.SelectToken("finish_reason");
+                            if (finish != null && finish.ToString() == "stop")
+                            {
+                                Debug.Log("[LLM] 收到 finish_reason=stop");
+                                break;
+                            }
                         }
-                        var finish = item.SelectToken("finish_reason");
-
-                        if (finish != null && finish.ToString() == "stop")
+                        catch (Exception ex)
                         {
-                            break;
+                            Debug.LogError($"[LLM] JSON解析错误: {ex.Message}");
                         }
-                    } 
+                    }
+
                     string text2 = "";
                     if (!isComplete)
                     {
@@ -196,8 +219,6 @@ namespace LKZ.GPT
                                 break;
                             }
                         }
-
-
                         if (index != 0)
                         {
                             ++index;
@@ -208,9 +229,8 @@ namespace LKZ.GPT
                     else
                     {
                         text2 = mess;
-                    } 
+                    }
                     callback.Invoke(text2, isComplete);
-                   
                 }
             }
         }
