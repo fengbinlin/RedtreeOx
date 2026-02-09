@@ -11,8 +11,8 @@ namespace LKZ.VoiceSynthesis
     {
         public const string appId = "6478715526";
         public const string accessToken = "FTsrazn8vMy_ndWuwsltJz81XfQw2Pvy";
-        public const string resourceId = "seed-tts-2.0";
-        public const string speaker = "saturn_zh_male_shuanglangshaonian_tob";
+        public const string resourceId = "seed-tts-1.0";
+        public const string speaker = "zh_male_livelybro_mars_bigtts";
 
         private static TTSAudioPlayer audioPlayer;
 
