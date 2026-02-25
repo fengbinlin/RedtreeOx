@@ -6,6 +6,7 @@ using LKZ.GPT;
 using LKZ.Models;
 using LKZ.TypeEventSystem;
 using LKZ.VoiceSynthesis; // 引用 VoiceTTS 所在的命名空间
+using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -71,12 +72,14 @@ namespace LKZ.Logics
 
         private IEnumerator StreamControlCor()
         {
+            Debug.Log("AAA");
             streamingClip = AudioClip.Create("StreamingTTS", SampleRate * BufferSeconds, 1, SampleRate, false);
             totalSamplesWritten = 0;
             bool hasStartedPlaying = false;
 
             while (isLLMProcessing || textQueue.Count > 0 || isTTSSynthesizing || (hasStartedPlaying && IsAudioPlaying()))
             {
+                Debug.Log("BBB"+isLLMProcessing+" "+textQueue.Count+" "+isTTSSynthesizing+" "+hasStartedPlaying+" "+IsAudioPlaying());
                 string textToSynthesize = "";
 
                 if (!isTTSSynthesizing && textQueue.Count > 0)
@@ -89,13 +92,16 @@ namespace LKZ.Logics
 
                 if (!string.IsNullOrEmpty(textToSynthesize))
                 {
+                    Debug.Log("CCC");
                     isTTSSynthesizing = true;
                     Debug.Log($"[LLMLogic] 开始合成: {textToSynthesize}");
                     _showUITextAction?.Invoke(textToSynthesize);
 
                     // 核心修复：调用 VoiceTTS 静态类的流式合成方法
                     VoiceTTS.StartStreamingSynthesis(textToSynthesize,
-                        onDataReceived: (samples) => {
+                        onDataReceived: (samples) =>
+                        {
+                            Debug.Log("DDD");
                             if (samples != null && samples.Length > 0)
                             {
                                 // 将音频采样数据填入 AudioClip 缓冲区
@@ -103,8 +109,11 @@ namespace LKZ.Logics
                                 totalSamplesWritten += samples.Length;
                             }
                         },
-                        onComplete: () => {
+                        onComplete: () =>
+                        {
+                            Debug.Log("EEE");
                             isTTSSynthesizing = false;
+
                         }
                     );
                 }
@@ -115,7 +124,7 @@ namespace LKZ.Logics
                     SendCommand.Send(new ChatGPTStartTalkCommand());
                     hasStartedPlaying = true;
                 }
-
+                
                 yield return new WaitForSeconds(0.05f);
             }
 
@@ -142,6 +151,7 @@ namespace LKZ.Logics
 
         private void PlayFinish()
         {
+            Debug.Log("语音播放停止");
             DigitalHumanAnimatorController.instance.StopTalking();
             audioModel.Stop();
             ResetState();

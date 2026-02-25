@@ -57,6 +57,7 @@ namespace LKZ.GPT
 
                 while (!asyncOp.isDone || request.downloadHandler.text.Length > lastProcessedIndex)
                 {
+                    Debug.Log("GGG " + !asyncOp.isDone + " " + request.downloadHandler.text.Length + " " + lastProcessedIndex);
                     if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
                     {
                         Debug.LogError($"[LLM] 请求失败: {request.error} | {request.downloadHandler.text}");
@@ -87,8 +88,11 @@ namespace LKZ.GPT
                                     string answer = json["answer"]?.ToString();
                                     if (!string.IsNullOrEmpty(answer))
                                     {
+                                        // 🔹直接打印文本片段
+                                        Debug.Log($"[LLM StreamingText] {answer}");
+
                                         mess += answer;
-                                        // 记录并更新会话ID以便连续对话
+
                                         if (json.ContainsKey("conversation_id"))
                                             config.conversation_id = json["conversation_id"].ToString();
 
@@ -98,7 +102,16 @@ namespace LKZ.GPT
                                 }
                                 else if (eventType == "message_end")
                                 {
-                                    ProcessAndCallback(ref mess, true, callback);
+                                    Debug.Log("IIII");
+                                    // 无论 mess 是否为空，都标记结束
+                                    if (!string.IsNullOrEmpty(mess))
+                                    {
+                                        ProcessAndCallback(ref mess, true, callback);
+                                    }
+                                    else
+                                    {
+                                        callback?.Invoke("", true); // 直接标记 isFinal=true
+                                    }
                                     yield break;
                                 }
                             }
@@ -107,6 +120,9 @@ namespace LKZ.GPT
                     }
                     yield return wait_internal;
                 }
+                // // 🔴 兜底逻辑：循环结束，但没有触发 message_end
+                // Debug.Log("HHHH");
+                // ProcessAndCallback(ref mess, true, callback);
             }
         }
 
