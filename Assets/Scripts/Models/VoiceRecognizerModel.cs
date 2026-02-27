@@ -7,7 +7,20 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 using System.IO;
-
+using LKZ.Chat.Commands;
+using LKZ.Commands.Chat;
+using LKZ.Commands.Voice;
+using LKZ.DependencyInject;
+using LKZ.GPT;
+using LKZ.Models;
+using LKZ.TypeEventSystem;
+using LKZ.VoiceSynthesis; // 引用 VoiceTTS 所在的命名空间
+using NUnit.Framework;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using LKZ.Manager;
 namespace LKZ.Voice
 {
     public sealed class VoiceRecognizerModel
@@ -92,9 +105,10 @@ namespace LKZ.Voice
         IEnumerator VADCoroutine()
         {
             float[] sampleData = new float[(int)(vadSampleWindow * 16000)];
-            
+
             while (isRecogition)
             {
+
                 int currentPos = Microphone.GetPosition(deviceName);
                 int diff = (currentPos - lastSamplePos + micClip.samples) % micClip.samples;
 
@@ -122,6 +136,11 @@ namespace LKZ.Voice
                                 // 回溯 0.3s 防止切头
                                 recordingStartPos = (lastSamplePos - (int)(0.3f * 16000) + micClip.samples) % micClip.samples;
                                 Debug.Log($"[VAD] 开始说话 (RMS:{rms:F4})");
+                                GameApp.instance.tips.text="红岭牛听到你的提问了！";
+                            }
+                            else
+                            {
+                                GameApp.instance.tips.text="请语音提问，红岭牛在倾听！";
                             }
                             break;
 
@@ -130,6 +149,7 @@ namespace LKZ.Voice
                             {
                                 vadState = VADState.Pause;
                                 silenceTimer = 0;
+                                GameApp.instance.tips.text="红岭牛听到你的提问了！";
                             }
                             break;
 
@@ -144,6 +164,7 @@ namespace LKZ.Voice
                                     HandleStopAndUpload(); // 处理上传
                                 }
                             }
+                            GameApp.instance.tips.text = "红岭牛思考中，马上为你解答……";
                             break;
                     }
                 }
@@ -158,9 +179,9 @@ namespace LKZ.Voice
 
             int currentPos = lastSamplePos;
             int length = (currentPos - recordingStartPos + micClip.samples) % micClip.samples;
-            
+
             Debug.Log($"[VAD] 说话结束，截取长度: {length / 16000f:F2}s");
-            
+
             float[] samples = new float[length];
             // 循环缓冲区读取逻辑
             if (recordingStartPos + length <= micClip.samples)
@@ -185,7 +206,8 @@ namespace LKZ.Voice
         {
             string base64Audio = Convert.ToBase64String(audioData);
 
-            var requestData = new {
+            var requestData = new
+            {
                 user = new { uid = appId },
                 audio = new { data = base64Audio },
                 request = new { model_name = "bigmodel" }
@@ -225,14 +247,23 @@ namespace LKZ.Voice
             try
             {
                 var response = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
-                string text = response.result.text;
+                string text2 = response.result.text;
+                string text = response.result.text + "(请严格在150字之内完成回答,避免回答过长，回答应该采用几大段为形式，可以有回车符号，但是避免空行和多个不同分点出现。)";
                 Debug.Log($"[ASR] 识别结果: {text}");
-
+                SendCommand.Send(new AddChatContentCommand
+                {
+                    infoType = Enum.InfoType.My,
+                    _addTextAction = value => value.Invoke(text2)
+                });
+                SendCommand.Send(new GenerateFinishCommand { });
                 if (!string.IsNullOrEmpty(text))
                 {
+                    Debug.Log("TestTest");
                     voiceRecognitionResult.IsComplete = true;
                     voiceRecognitionResult.text = text;
+
                     SendCommand.Send(voiceRecognitionResult);
+                    GameApp.instance.tips.text = "红岭牛思考中，马上为你解答……";
                     // 注意：这里不需要 SetIsRecogition(true)，因为 LLM 流程结束后会发命令来开启
                 }
                 else

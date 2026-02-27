@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace LKZ.Manager
 {
@@ -22,13 +23,13 @@ namespace LKZ.Manager
 �����������������
 �������������������ϵwx:LKZ4251";
 
-
+        public Text tips;
         private VoiceRecognizerModel voiceRecognizer;
         private LLMLogic  llmLogic;
 
         [Inject]
         private ISendCommand SendCommand { get; set; }
-
+        public static GameApp instance;
         public void DIRegisterBinding(IRegisterBinding registerBinding)
         {
             registerBinding.Binding<MonoBehaviour>().To(this);
@@ -41,7 +42,10 @@ namespace LKZ.Manager
             registerBinding.Binding<LLMLogic>().To(llmLogic);
 
         }
-
+        void Awake()
+        {
+            instance=this;          
+        }
         void DIAwakeInterface.OnAwake()
         { 
             Application.runInBackground = true;
