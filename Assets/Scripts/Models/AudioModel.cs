@@ -16,12 +16,12 @@ namespace LKZ.Models
     public sealed class AudioModel : MonoBehaviour, IDRegisterBindingInterface
     {
         //private RolleManager rolleManager;
-         
+
 
         //public bool IsPlaying => rolleManager.AudioSource.isPlaying;
         public float Time => audioSource.time;
         public AudioSource audioSource;
-         
+
 
         private void Awake()
         {
@@ -41,5 +41,9 @@ namespace LKZ.Models
         }
 
         public void Stop() => audioSource.Stop();
+        // 在 AudioModel 中添加
+        public void Pause() => audioSource.Pause();
+        public void Resume() => audioSource.UnPause();
+        public void SetTime(float time) => audioSource.time = time;
     }
 }
