@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace LKZ.UI 
+namespace LKZ.UI
 {
     public sealed class ShowContent : MonoBehaviour
     {
@@ -28,9 +28,9 @@ namespace LKZ.UI
             }
             set
             {
-                this.enabled = value;
-                GetComponentInChildren<ContentSizeFitter>().enabled = value;
-                GetComponentInChildren<LayoutElement>().enabled = value;
+                this.enabled = true;
+                GetComponentInChildren<ContentSizeFitter>().enabled = true;
+                GetComponentInChildren<LayoutElement>().enabled = true;
             }
         }
 
@@ -67,12 +67,26 @@ namespace LKZ.UI
         {
             var rect = _text.rectTransform.rect;
 
-            if (rect.width >= textMaxWidth && _textLayout.preferredWidth != textMaxWidth)
+            // 获取文本的缩放比例
+            Vector3 textScale = _text.rectTransform.localScale;
+
+            // 计算反缩放后的真实逻辑尺寸
+            float logicWidth = rect.width * textScale.x;
+            float logicHeight = rect.height * textScale.y;
+
+            // 将textMaxWidth转换为逻辑宽度进行比较
+            float logicMaxWidth = textMaxWidth * textScale.x;
+
+            // 用逻辑宽度与逻辑宽度限制比较
+            if (logicWidth >= logicMaxWidth && _textLayout.preferredWidth != textMaxWidth)
             {
-                _textLayout.preferredWidth = textMaxWidth;
+                _textLayout.preferredWidth = textMaxWidth;  // 这里仍然用原始值，因为LayoutElement使用渲染宽度
                 return;
             }
-            _textParent.sizeDelta = new Vector2(rect.width, rect.height) + _parentExtraSize;
+
+            // 使用逻辑尺寸计算父物体大小
+            Vector2 logicSize = new Vector2(logicWidth, logicHeight);
+            _textParent.sizeDelta = logicSize + _parentExtraSize;
         }
     }
 }

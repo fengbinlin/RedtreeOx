@@ -15,16 +15,17 @@ namespace LKZ.Models
     /// </summary> 
     public sealed class AudioModel : MonoBehaviour, IDRegisterBindingInterface
     {
-        private RolleManager rolleManager;
-         
+        //private RolleManager rolleManager;
 
-        public bool IsPlaying => rolleManager.AudioSource.isPlaying;
-        public float Time => rolleManager.AudioSource.time;
-         
+
+        //public bool IsPlaying => rolleManager.AudioSource.isPlaying;
+        public float Time => audioSource.time;
+        public AudioSource audioSource;
+
 
         private void Awake()
         {
-            rolleManager = FindObjectOfType<RolleManager>(); 
+            //rolleManager = FindObjectOfType<RolleManager>(); 
         }
 
         void IDRegisterBindingInterface.DIRegisterBinding(IRegisterBinding registerBinding)
@@ -34,10 +35,15 @@ namespace LKZ.Models
 
         public void Play(AudioClip clip)
         {
-            rolleManager.AudioSource.clip = clip;
-            rolleManager.AudioSource.Play();
+            audioSource.clip = clip;
+            audioSource.Play();
+            DigitalHumanAnimatorController.instance.StartTalking();
         }
 
-        public void Stop() => rolleManager.AudioSource.Stop();
+        public void Stop() => audioSource.Stop();
+        // 在 AudioModel 中添加
+        public void Pause() => audioSource.Pause();
+        public void Resume() => audioSource.UnPause();
+        public void SetTime(float time) => audioSource.time = time;
     }
 }

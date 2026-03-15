@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace LKZ.Manager
 {
@@ -18,17 +19,17 @@ namespace LKZ.Manager
     {
         [SerializeField, TextArea]
         private string StartContent =
-@"ÎÒÊÇÒ»¸öÓÉÄ¾×ÓÀî¿ª·¢µÄGPTÁÄÌì»úÆ÷ÈË
-Äã¿ÉÒÔÓïÒôºÍÎÒÁÄÌì
-Èç¹ûÄãÓĞÆäËûĞèÇó£¬ÇëÁªÏµwx:LKZ4251";
+@"ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½î¿ªï¿½ï¿½ï¿½ï¿½GPTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµwx:LKZ4251";
 
-
+        public Text tips;
         private VoiceRecognizerModel voiceRecognizer;
         private LLMLogic  llmLogic;
 
         [Inject]
         private ISendCommand SendCommand { get; set; }
-
+        public static GameApp instance;
         public void DIRegisterBinding(IRegisterBinding registerBinding)
         {
             registerBinding.Binding<MonoBehaviour>().To(this);
@@ -41,7 +42,10 @@ namespace LKZ.Manager
             registerBinding.Binding<LLMLogic>().To(llmLogic);
 
         }
-
+        void Awake()
+        {
+            instance=this;          
+        }
         void DIAwakeInterface.OnAwake()
         { 
             Application.runInBackground = true;
@@ -63,16 +67,16 @@ namespace LKZ.Manager
             llmLogic.Initialized();
 
             SendCommand.Send(new AddChatContentCommand { infoType = Enum.InfoType.ChatGPT, _addTextAction = value => value.Invoke(StartContent) });
-            SendCommand.Send(new GenerateFinishCommand { });//Éú³ÉÍê³ÉÃüÁî
+            SendCommand.Send(new GenerateFinishCommand { });//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
              
-            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });//¿ªÊ¼ÓïÒôÊ¶±ğ
+            SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½
 
         }
 
 
         private void OnDestroy()
         {
-            voiceRecognizer.OnDestroy();
+            //voiceRecognizer.OnDestroy();
         }
     }
 }

@@ -22,16 +22,16 @@ namespace LKZ.UI
         [SerializeField]
         private GameObject _my_Go, _gpt_go;
 
-        [SerializeField, Tooltip("¼ä¸ô")]
+        [SerializeField, Tooltip("ï¿½ï¿½ï¿½")]
         private float interval = 15f;
 
-        [SerializeField, Tooltip("Éú³ÉÊý¾ÝÊÇ·ñÍùÉÏÒÆ¶¯¶àÉÙ")]
+        [SerializeField, Tooltip("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½")]
         private float GPTGenerateContentUpMove = 30f;
 
         private ShowContent currentShowContent;
 
         /// <summary>
-        /// Éú³ÉÄÚÈÝºÍ²»Éú³ÉÄÚÈÝ¹ö¶¯ÊÓÍ¼µÄÎ»ÖÃ
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝºÍ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¹ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½Î»ï¿½ï¿½
         /// </summary>
         private Vector3 defaultPos, GPTGenerateContentPos;
          
@@ -39,7 +39,7 @@ namespace LKZ.UI
         private bool isSetScrollRectNormalizedPosition;
 
         /// <summary>
-        /// ÊÇ·ñÔÙÉú³ÉGPTÄÚÈÝ
+        /// ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GPTï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private bool isGenerateGPTContent;
 
@@ -105,6 +105,7 @@ namespace LKZ.UI
                     break;
                 case InfoType.ChatGPT:
                     currentShowContent = Instantiate(_gpt_go, _scrollRect_Content).GetComponent<ShowContent>();
+                    currentShowContent.transform.localScale*=2;
                     isGenerateGPTContent = true;
                     break;
             }
@@ -141,7 +142,7 @@ namespace LKZ.UI
                 _scrollRect.verticalNormalizedPosition = Mathf.Lerp(_scrollRect.verticalNormalizedPosition, 0, 0.05f);
 
 #if !UNITY_STANDALONE_WIN
-            //´¦ÀíÍùÉÏÒÆ¶¯
+            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½
             thisRect.anchoredPosition = Vector3.Lerp(this.thisRect.anchoredPosition, isGenerateGPTContent ? this.GPTGenerateContentPos : this.defaultPos, 0.05f);
 #endif
         }

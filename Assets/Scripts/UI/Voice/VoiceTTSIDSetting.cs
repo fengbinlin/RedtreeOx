@@ -21,7 +21,7 @@ namespace LKZ.UI.Voice
         {
             if(arg0  )
             {
-                VoiceTTS.VoiceID = voiceID; 
+                //VoiceTTS.VoiceID = voiceID; 
             }
         }
     }

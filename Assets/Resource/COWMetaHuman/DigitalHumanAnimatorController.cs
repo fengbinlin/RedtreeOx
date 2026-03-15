@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class DigitalHumanAnimatorController : MonoBehaviour
 {
+    public static DigitalHumanAnimatorController instance;
     private Animator animator;
     private bool isTalking = false;
 
@@ -24,6 +25,7 @@ public class DigitalHumanAnimatorController : MonoBehaviour
 
     void Awake()
     {
+        instance=this;
         animator = GetComponent<Animator>();
         if (mouthBone != null)
             defaultMouthRotation = mouthBone.localRotation;

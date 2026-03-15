@@ -1,51 +1,120 @@
-﻿using LKZ.Utilitys;
-using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
+using System;
+using System.Text;
+using System.Collections;
+using Newtonsoft.Json;
 
 namespace LKZ.VoiceSynthesis
-{ 
-
-    /// <summary>
-    ///  语音合成
-    /// </summary>
+{
     public static class VoiceTTS
     {
-        public const string ErrorMess = "语音识别出错了";
+        public const string appId = "8077658463";
+        public const string accessToken = "jopHOgEo6G6baZQxeO1by6-904d494Rf";
+        public const string resourceId = "seed-tts-1.0";
+        public const string speaker = "zh_male_livelybro_mars_bigtts";
 
-        static int voiceID;
-        public static int VoiceID
-        {
-            get => voiceID; set
-            {
-                voiceID = value;
-                DataSave.SetVoiceID(voiceID);
-            }
-        }
+        private static TTSAudioPlayer audioPlayer;
 
         static VoiceTTS()
         {
-            voiceID = DataSave.GetVoiceID();
+            GameObject go = new GameObject("TTS_Downloader");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            audioPlayer = go.AddComponent<TTSAudioPlayer>();
         }
 
-        public static IEnumerator Synthesis(string content)
-        { 
-            using (var request = UnityWebRequestMultimedia.GetAudioClip($"http://1.94.131.28:19463/tts?content={content}&id={VoiceID}", AudioType.MPEG))
-            { 
-                var result = request.SendWebRequest();
-                while (!result.isDone)
+        public static void StartStreamingSynthesis(string text, Action<float[]> onDataReceived, Action onComplete)
+        {
+            audioPlayer.StartCoroutine(audioPlayer.RequestTTSStream(text, onDataReceived, onComplete));
+        }
+
+        private class TTSAudioPlayer : MonoBehaviour
+        {
+            private const int SourceSampleRate = 24000;
+
+            public IEnumerator RequestTTSStream(string text, Action<float[]> onDataReceived, Action onComplete)
+            {
+                string url = "https://openspeech.bytedance.com/api/v3/tts/unidirectional";
+                var payload = new {
+                    user = new { uid = "unity" },
+                    req_params = new {
+                        text = text,
+                        speaker = VoiceTTS.speaker,
+                        audio_params = new { format = "pcm", sample_rate = SourceSampleRate }
+                    }
+                };
+
+                using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
                 {
-                    yield return null;
+                    byte[] bodyRaw = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(payload));
+                    request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                    request.downloadHandler = new TTSStreamHandler(onDataReceived);
+
+                    request.SetRequestHeader("Content-Type", "application/json");
+                    request.SetRequestHeader("X-Api-App-Id", appId);
+                    request.SetRequestHeader("X-Api-Access-Key", accessToken);
+                    request.SetRequestHeader("X-Api-Resource-Id", resourceId);
+
+                    yield return request.SendWebRequest();
+
+                    if (request.result != UnityWebRequest.Result.Success)
+                        Debug.LogError($"[TTS] 请求失败: {request.error}");
+                    
+                    onComplete?.Invoke();
                 }
-                if (string.IsNullOrEmpty(request.error))
+            }
+
+            private class TTSStreamHandler : DownloadHandlerScript
+            {
+                private Action<float[]> onDataReceived;
+                private StringBuilder jsonBuffer = new StringBuilder();
+
+                public TTSStreamHandler(Action<float[]> callback) : base(new byte[64 * 1024]) 
+                { 
+                    onDataReceived = callback; 
+                }
+
+                protected override bool ReceiveData(byte[] data, int length)
                 {
-                    AudioClip _audioClip = DownloadHandlerAudioClip.GetContent(request);
-                    yield return _audioClip;
+                    string segment = Encoding.UTF8.GetString(data, 0, length);
+                    jsonBuffer.Append(segment);
+                    
+                    string fullContent = jsonBuffer.ToString();
+                    int lastNewLine = fullContent.LastIndexOf('\n');
+
+                    if (lastNewLine != -1)
+                    {
+                        string processable = fullContent.Substring(0, lastNewLine);
+                        jsonBuffer.Remove(0, lastNewLine + 1);
+
+                        string[] lines = processable.Split('\n');
+                        foreach (var line in lines)
+                        {
+                            if (string.IsNullOrWhiteSpace(line)) continue;
+                            ProcessJsonLine(line);
+                        }
+                    }
+                    return true;
                 }
-                else
+
+                private void ProcessJsonLine(string json)
                 {
-                    yield return ErrorMess;
+                    try {
+                        var res = JsonConvert.DeserializeObject<TTSRes>(json);
+                        if (res != null && !string.IsNullOrEmpty(res.data))
+                        {
+                            byte[] pcm = Convert.FromBase64String(res.data);
+                            float[] samples = new float[pcm.Length / 2];
+                            for (int i = 0; i < samples.Length; i++)
+                            {
+                                samples[i] = BitConverter.ToInt16(pcm, i * 2) / 32768f;
+                            }
+                            onDataReceived?.Invoke(samples);
+                        }
+                    } catch { }
                 }
+
+                [Serializable] private class TTSRes { public string data; }
             }
         }
     }

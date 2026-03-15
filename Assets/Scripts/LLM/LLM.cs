@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using UnityEngine.Networking;
 using UnityEngine;
@@ -6,212 +6,158 @@ using System.Collections;
 using System.Collections.Generic;
 using LKZ.Logics;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace LKZ.GPT
 {
     public sealed class Certificate : CertificateHandler
     {
-        protected override bool ValidateCertificate(byte[] certificateData)
-        {
-            return true;
-        }
+        protected override bool ValidateCertificate(byte[] certificateData) => true;
     }
+
     public static class LLM
     {
-        private readonly static WaitForSeconds wait_internal = new WaitForSeconds(0.2f);
-
+        private readonly static WaitForSeconds wait_internal = new WaitForSeconds(0.1f);
         private readonly static char[] Segmentations = new char[] { '；', ';', '。', ':', '：', '！', '!', '?', '？', ',', '，' };
 
-        [Serializable]
-        public class UserDataStruct
-        {
-            public string model;
-            public List<Message> messages;
-
-
-            /// <summary>
-            /// 是否流式
-            /// </summary>
-            public bool stream;
-
-            /// <summary>
-            /// 采样温度，控制输出的随机性，必须为正数
-            /// 取值范围是：(0.0,1.0]，不能等于 0，默认值为 0.95,值越大，会使输出更随机，更具创造性；值越小，输出会更加稳定或确定
-            /// 建议您根据应用场景调整 top_p 或 temperature 参数，但不要同时调整两个参数
-            /// </summary>
-            public float temperature;
-
-            /// <summary>
-            /// 用温度取样的另一种方法，称为核取样
-            /// 取值范围是：(0.0, 1.0) 开区间，不能等于 0 或 1，默认值为 0.7
-            /// 模型考虑具有 top_p 概率质量tokens的结果
-            /// 例如：0.1 意味着模型解码器只考虑从前 10% 的概率的候选集中取tokens
-            /// 建议您根据应用场景调整 top_p 或 temperature 参数，但不要同时调整两个参数
-            /// </summary>
-            public float top_p;
-
-            public float top_k;
-            public float max_prompt_tokens;
-            public float max_new_tokens;
-        }
-
-        [Serializable]
-        public class Message
-        {
-            private Message() { }
-
-            public string role;
-            public string content;
-
-            public static Message CreateSystemMessage(string content)
-            {
-                return new Message() { role = "system", content = content };
-            }
-
-            public static Message CreateUserMessage(string content)
-            {
-                return new Message() { role = "user", content = content };
-            }
-
-            public static Message CreateAssistantMessage(string content)
-            {
-                return new Message() { role = "assistant", content = content };
-            }
-        }
-
-        readonly static UserDataStruct userDataStruct;
-        static readonly LLMConfig config;
-        static LLM()
-        {
-            config = UnityEngine.Resources.Load<LLMConfig>("LLMConfig");
-
-            userDataStruct = new UserDataStruct()
-            {
-                model = config.model,
-                stream = true,
-                messages = new List<Message>(),
-                temperature = 1,
-                top_p = 0.7f,
-            };
-            userDataStruct.messages.Add(Message.CreateSystemMessage(config.roleSetting));
-        }
-
         /// <summary>
-        /// llm
+        /// 严格匹配 Python Demo 的 Request 方法
         /// </summary>
-        /// <param name="content"></param>
-        /// <param name="callback"></param>
-        /// <returns></returns>
         public static IEnumerator Request(string content, Action<string, bool> callback)
         {
-            userDataStruct.messages.Add(Message.CreateUserMessage(content));
+            // 重新加载配置以获取最新的 URL 和 Key
+            LLMConfig config = Resources.Load<LLMConfig>("LLMConfig");
 
-
-            return RequestGPTSegmentation(JsonUtility.ToJson(userDataStruct), callback);
-        }
-
-
-        private static IEnumerator RequestGPTSegmentation(string requestData, Action<string, bool> callback)
-        {
-            string last = "";
-            string mess = "";
-
-            using (var request = new UnityWebRequest(config.url, "POST"))
+            // 构造严格对标 Python Demo 的 Payload
+            var payload = new
             {
-                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestData))
-                { contentType = "application/json" };
+                inputs = new Dictionary<string, object>(),
+                query = content,
+                response_mode = "streaming", // 强制使用流式以适配 LLMLogic 的队列机制
+                user = config.user,
+                conversation_id = config.conversation_id
+            };
 
+            string jsonPayload = JsonConvert.SerializeObject(payload);
+
+            using (UnityWebRequest request = new UnityWebRequest(config.url, "POST"))
+            {
+                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
+                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new DownloadHandlerBuffer();
-
                 request.certificateHandler = new Certificate();
 
+                request.SetRequestHeader("Content-Type", "application/json");
                 request.SetRequestHeader("Authorization", $"Bearer {config.key}");
+
                 UnityWebRequestAsyncOperation asyncOp = request.SendWebRequest();
-                 
-                while (!asyncOp.isDone)
+
+                string mess = "";
+                int lastProcessedIndex = 0;
+
+                while (!asyncOp.isDone || request.downloadHandler.text.Length > lastProcessedIndex)
                 {
-                    Disponse(false);
+                    Debug.Log("GGG " + !asyncOp.isDone + " " + request.downloadHandler.text.Length + " " + lastProcessedIndex);
+                    if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+                    {
+                        Debug.LogError($"[LLM] 请求失败: {request.error} | {request.downloadHandler.text}");
+                        callback?.Invoke("对话出现错误", true);
+                        yield break;
+                    }
+
+                    string fullText = request.downloadHandler.text;
+                    if (fullText.Length > lastProcessedIndex)
+                    {
+                        string newChunk = fullText.Substring(lastProcessedIndex);
+                        lastProcessedIndex = fullText.Length;
+
+                        // 解析 Dify SSE 数据流
+                        string[] lines = newChunk.Split(new[] { "data:" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in lines)
+                        {
+                            string data = line.Trim();
+                            if (string.IsNullOrEmpty(data) || data.Contains("[DONE]")) continue;
+
+                            try
+                            {
+                                JObject json = JObject.Parse(data);
+                                string eventType = json["event"]?.ToString();
+
+                                if (eventType == "message")
+                                {
+                                    string answer = json["answer"]?.ToString();
+                                    if (!string.IsNullOrEmpty(answer))
+                                    {
+                                        // 🔹直接打印文本片段
+                                        Debug.Log($"[LLM StreamingText] {answer}");
+
+                                        mess += answer;
+
+                                        if (json.ContainsKey("conversation_id"))
+                                            config.conversation_id = json["conversation_id"].ToString();
+
+                                        // 实时断句回调给 LLMLogic
+                                        ProcessAndCallback(ref mess, false, callback);
+                                    }
+                                }
+                                else if (eventType == "message_end")
+                                {
+                                    Debug.Log("IIII");
+                                    // 无论 mess 是否为空，都标记结束
+                                    if (!string.IsNullOrEmpty(mess))
+                                    {
+                                        ProcessAndCallback(ref mess, true, callback);
+                                    }
+                                    else
+                                    {
+                                        callback?.Invoke("", true); // 直接标记 isFinal=true
+                                    }
+                                    yield break;
+                                }
+                            }
+                            catch { /* 忽略不完整的JSON片断 */ }
+                        }
+                    }
                     yield return wait_internal;
                 }
 
-                if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+                // 🔴 兜底逻辑：循环结束，但后端没有显式发 message_end
+                Debug.Log("[LLM] request loop finished without explicit message_end, flush as FINAL");
+                if (!string.IsNullOrEmpty(mess))
                 {
-                    Debug.LogError("Error: " + request.error);
-                    callback?.Invoke("GPT出现点问题", true);
-                    yield break;
+                    // 把当前缓冲区当作最后一段结果送出，并标记 isFinal=true
+                    ProcessAndCallback(ref mess, true, callback);
                 }
-                // 处理最后一次接收到的数据
-                Disponse(true);
-
-
-                void Disponse(bool isComplete)
-                { 
-                    string temp = "";
-                    var str = request.downloadHandler.text;
-                    if (!string.IsNullOrEmpty(last))
-                    {
-                        temp = str.Replace(last, "");
-                    }
-                    else
-                        temp = str;
-
-                    last = str;
-
-                    var datas = temp.Split("data:");
-
-
-                    foreach (var requestJson in datas)
-                    { 
-                        if (string.IsNullOrEmpty(requestJson))
-                            continue;
-
-                        if (requestJson.Contains("[DONE]"))
-                            break;
-                        var jsonP = JToken.Parse(requestJson.Replace("data:", ""));
-                        var item = jsonP["choices"][0];
-
-                        var tt = item["delta"].SelectToken("content")?.ToString();
-
-                        if (!string.IsNullOrEmpty(tt))
-                        {
-                            tt = tt.Trim();
-                            mess += tt;
-                        }
-                        var finish = item.SelectToken("finish_reason");
-
-                        if (finish != null && finish.ToString() == "stop")
-                        {
-                            break;
-                        }
-                    } 
-                    string text2 = "";
-                    if (!isComplete)
-                    {
-                        int index = 0;
-                        foreach (var item in Segmentations)
-                        {
-                            if (mess.Contains(item))
-                            {
-                                index = mess.IndexOf(item);
-                                break;
-                            }
-                        }
-
-
-                        if (index != 0)
-                        {
-                            ++index;
-                            text2 = mess.Substring(0, index);
-                            mess = mess.Remove(0, index);
-                        }
-                    }
-                    else
-                    {
-                        text2 = mess;
-                    } 
-                    callback.Invoke(text2, isComplete);
-                   
+                else
+                {
+                    // 即使没有剩余文本，也要显式告诉上层这是最后一次回调
+                    callback?.Invoke(string.Empty, true);
                 }
+            }
+        }
+
+        private static void ProcessAndCallback(ref string mess, bool isFinal, Action<string, bool> callback)
+        {
+            if (string.IsNullOrEmpty(mess)) return;
+
+            if (!isFinal)
+            {
+                int index = mess.IndexOfAny(Segmentations);
+                if (index != -1)
+                {
+                    string sentence = mess.Substring(0, index + 1);
+                    mess = mess.Remove(0, index + 1);
+                    // 调试：打印每次送给上层的分句内容
+                    Debug.Log($"[LLM Callback] chunk: {sentence}");
+                    callback?.Invoke(sentence, false);
+                }
+            }
+            else
+            {
+                // 调试：最后一次回调打印特别标记
+                Debug.Log($"[LLM Callback FINAL] {mess}  <<<END>>>");
+                callback?.Invoke(mess, true);
+                mess = "";
             }
         }
     }
