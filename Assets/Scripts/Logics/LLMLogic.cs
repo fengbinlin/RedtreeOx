@@ -1,4 +1,4 @@
-﻿using LKZ.Chat.Commands;
+using LKZ.Chat.Commands;
 using LKZ.Commands.Chat;
 using LKZ.Commands.Voice;
 using LKZ.DependencyInject;
@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using LKZ.Manager;
 
 namespace LKZ.Logics
 {
@@ -248,6 +249,12 @@ namespace LKZ.Logics
             audioModel.Stop();
             ResetState();
             _mono.StopAllCoroutines();
+
+            // 恢复提示文案和语音侦听状态
+            if (GameApp.instance != null && GameApp.instance.tips != null)
+            {
+                GameApp.instance.tips.text = "请语音提问，红岭牛在倾听！";
+            }
 
             SendCommand.Send(new SettingVoiceRecognitionCommand { IsStartVoiceRecognition = true });
             SendCommand.Send(new GenerateFinishCommand { });

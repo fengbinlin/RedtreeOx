@@ -9,8 +9,8 @@ namespace LKZ.VoiceSynthesis
 {
     public static class VoiceTTS
     {
-        public const string appId = "6478715526";
-        public const string accessToken = "FTsrazn8vMy_ndWuwsltJz81XfQw2Pvy";
+        public const string appId = "8077658463";
+        public const string accessToken = "jopHOgEo6G6baZQxeO1by6-904d494Rf";
         public const string resourceId = "seed-tts-1.0";
         public const string speaker = "zh_male_livelybro_mars_bigtts";
 

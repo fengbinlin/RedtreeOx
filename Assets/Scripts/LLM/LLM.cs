@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using UnityEngine.Networking;
 using UnityEngine;
@@ -120,9 +120,19 @@ namespace LKZ.GPT
                     }
                     yield return wait_internal;
                 }
-                // // 🔴 兜底逻辑：循环结束，但没有触发 message_end
-                // Debug.Log("HHHH");
-                // ProcessAndCallback(ref mess, true, callback);
+
+                // 🔴 兜底逻辑：循环结束，但后端没有显式发 message_end
+                Debug.Log("[LLM] request loop finished without explicit message_end, flush as FINAL");
+                if (!string.IsNullOrEmpty(mess))
+                {
+                    // 把当前缓冲区当作最后一段结果送出，并标记 isFinal=true
+                    ProcessAndCallback(ref mess, true, callback);
+                }
+                else
+                {
+                    // 即使没有剩余文本，也要显式告诉上层这是最后一次回调
+                    callback?.Invoke(string.Empty, true);
+                }
             }
         }
 
@@ -137,11 +147,15 @@ namespace LKZ.GPT
                 {
                     string sentence = mess.Substring(0, index + 1);
                     mess = mess.Remove(0, index + 1);
+                    // 调试：打印每次送给上层的分句内容
+                    Debug.Log($"[LLM Callback] chunk: {sentence}");
                     callback?.Invoke(sentence, false);
                 }
             }
             else
             {
+                // 调试：最后一次回调打印特别标记
+                Debug.Log($"[LLM Callback FINAL] {mess}  <<<END>>>");
                 callback?.Invoke(mess, true);
                 mess = "";
             }

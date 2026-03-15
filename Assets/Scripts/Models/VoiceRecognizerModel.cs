@@ -32,8 +32,8 @@ namespace LKZ.Voice
         private VoiceRecognitionResultCommand voiceRecognitionResult = new VoiceRecognitionResultCommand();
 
         // 火山引擎配置
-        private string appId = "6478715526";
-        private string accessToken = "FTsrazn8vMy_ndWuwsltJz81XfQw2Pvy";
+        private string appId = "8077658463";
+        private string accessToken = "jopHOgEo6G6baZQxeO1by6-904d494Rf";
         private string resourceId = "volc.bigasr.auc_turbo";
         private string apiUrl = "https://openspeech.bytedance.com/api/v3/auc/bigmodel/recognize/flash";
 
